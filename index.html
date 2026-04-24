@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Movie Recap · Burmese Dubbing</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@300;400;500&family=Noto+Sans+Myanmar:wght@300;400;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0a0a0f;
+      --surface:  #111118;
+      --border:   #1e1e2e;
+      --accent:   #e8c547;
+      --accent2:  #ff5f40;
+      --text:     #e8e8f0;
+      --muted:    #555568;
+      --success:  #3ddc84;
+      --error:    #ff4d4d;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'IBM Plex Mono', monospace;
+      min-height: 100vh;
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    /* Custom cursor */
+    .cursor {
+      position: fixed;
+      width: 10px; height: 10px;
+      background: var(--accent);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-50%, -50%);
+      transition: transform 0.1s, width 0.2s, height 0.2s, background 0.2s;
+      mix-blend-mode: difference;
+    }
+    .cursor-ring {
+      position: fixed;
+      width: 36px; height: 36px;
+      border: 1px solid var(--accent);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9998;
+      transform: translate(-50%, -50%);
+      transition: transform 0.12s ease-out, width 0.3s, height 0.3s, opacity 0.3s;
+      opacity: 0.5;
+    }
+    .cursor.hovering { width: 6px; height: 6px; background: var(--accent2); }
+    .cursor-ring.hovering { width: 52px; height: 52px; opacity: 0.3; }
+
+    /* Grain overlay */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 1000;
+      opacity: 0.4;
+    }
+
+    /* Scanlines */
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.03) 2px,
+        rgba(0,0,0,0.03) 4px
+      );
+      pointer-events: none;
+      z-index: 999;
+    }
+
+    /* Layout */
+    .wrap {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Header */
+    header {
+      padding: 48px 0 32px;
+      position: relative;
+    }
+
+    .header-label {
+      font-size: 11px;
+      letter-spacing: 0.3em;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .header-label::before {
+      content: '';
+      display: inline-block;
+      width: 24px; height: 1px;
+      background: var(--accent);
+    }
+
+    h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(56px, 12vw, 96px);
+      line-height: 0.9;
+      letter-spacing: 0.02em;
+      color: var(--text);
+    }
+    h1 span {
+      color: var(--accent);
+      display: block;
+    }
+
+    .subtitle {
+      font-family: 'Noto Sans Myanmar', sans-serif;
+      font-size: 14px;
+      font-weight: 300;
+      color: var(--muted);
+      margin-top: 16px;
+      line-height: 1.7;
+    }
+
+    /* Divider */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 40px 0;
+      position: relative;
+    }
+    .divider::after {
+      content: '◆';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      background: var(--bg);
+      padding: 0 12px;
+      color: var(--accent);
+      font-size: 8px;
+    }
+
+    /* Main card */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 40px;
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 2px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2), transparent);
+    }
+
+    /* Input group */
+    .input-group {
+      margin-bottom: 28px;
+    }
+    .input-label {
+      font-size: 10px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .input-label .dot {
+      width: 6px; height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .url-input-wrap {
+      position: relative;
+    }
+    .url-input-wrap .xhs-icon {
+      position: absolute;
+      left: 16px; top: 50%;
+      transform: translateY(-50%);
+      width: 20px; height: 20px;
+      opacity: 0.5;
+    }
+
+    input[type="url"] {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 13px;
+      padding: 14px 16px 14px 48px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      appearance: none;
+    }
+    input[type="url"]::placeholder { color: var(--muted); }
+    input[type="url"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent), inset 0 0 20px rgba(232,197,71,0.03);
+    }
+    input[type="url"].error { border-color: var(--error); }
+
+    /* Options row */
+    .options-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+    .option-chip {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      padding: 8px 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+    }
+    .option-chip:hover, .option-chip.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(232,197,71,0.05);
+    }
+
+    /* Submit button */
+    .btn-submit {
+      width: 100%;
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 22px;
+      letter-spacing: 0.15em;
+      padding: 18px 32px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .btn-submit::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.15) 50%, transparent 100%);
+      transform: translateX(-100%);
+      transition: transform 0.4s;
+    }
+    .btn-submit:hover::before { transform: translateX(100%); }
+    .btn-submit:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(232,197,71,0.25);
+    }
+    .btn-submit:active { transform: translateY(0); }
+    .btn-submit:disabled {
+      background: var(--muted);
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    .btn-submit:disabled::before { display: none; }
+
+    /* Status panel */
+    .status-panel {
+      margin-top: 32px;
+      display: none;
+      border: 1px solid var(--border);
+      padding: 24px;
+      background: rgba(0,0,0,0.4);
+      position: relative;
+    }
+    .status-panel.visible { display: block; }
+
+    .status-header {
+      font-size: 10px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Progress steps */
+    .steps {
+      list-style: none;
+    }
+    .step {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      font-size: 12px;
+      opacity: 0.3;
+      transition: opacity 0.3s;
+    }
+    .step:last-child { border-bottom: none; }
+    .step.active { opacity: 1; }
+    .step.done { opacity: 0.7; }
+    .step.failed { opacity: 1; }
+
+    .step-icon {
+      width: 20px; height: 20px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+    .step.active .step-icon {
+      border-color: var(--accent);
+      color: var(--accent);
+      animation: spin-border 1s linear infinite;
+    }
+    .step.done .step-icon {
+      border-color: var(--success);
+      color: var(--success);
+      background: rgba(61,220,132,0.08);
+    }
+    .step.failed .step-icon {
+      border-color: var(--error);
+      color: var(--error);
+    }
+    @keyframes spin-border {
+      0% { box-shadow: 2px 0 0 var(--accent) inset; }
+      25% { box-shadow: 0 2px 0 var(--accent) inset; }
+      50% { box-shadow: -2px 0 0 var(--accent) inset; }
+      75% { box-shadow: 0 -2px 0 var(--accent) inset; }
+      100% { box-shadow: 2px 0 0 var(--accent) inset; }
+    }
+
+    .step-text { line-height: 1.5; }
+    .step-title { color: var(--text); font-weight: 500; }
+    .step-desc { font-size: 11px; color: var(--muted); margin-top: 2px; font-family: 'Noto Sans Myanmar', sans-serif; font-weight: 300; }
+
+    /* Terminal log */
+    .log-box {
+      margin-top: 20px;
+      background: #060608;
+      border: 1px solid var(--border);
+      padding: 16px;
+      max-height: 180px;
+      overflow-y: auto;
+      font-size: 11px;
+      line-height: 1.8;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+    .log-line { color: var(--muted); }
+    .log-line.info { color: var(--accent); }
+    .log-line.success { color: var(--success); }
+    .log-line.error { color: var(--error); }
+    .log-line::before { content: '› '; opacity: 0.4; }
+
+    /* Result */
+    .result-box {
+      margin-top: 20px;
+      padding: 20px;
+      background: rgba(61,220,132,0.05);
+      border: 1px solid rgba(61,220,132,0.2);
+      display: none;
+    }
+    .result-box.visible { display: block; }
+    .result-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 18px;
+      letter-spacing: 0.1em;
+      color: var(--success);
+      margin-bottom: 12px;
+    }
+    .result-path {
+      font-size: 12px;
+      color: var(--muted);
+      word-break: break-all;
+    }
+    .result-path span { color: var(--text); }
+
+    /* Error box */
+    .error-box {
+      margin-top: 20px;
+      padding: 20px;
+      background: rgba(255,77,77,0.05);
+      border: 1px solid rgba(255,77,77,0.2);
+      display: none;
+    }
+    .error-box.visible { display: block; }
+    .error-msg {
+      font-size: 12px;
+      color: var(--error);
+      line-height: 1.6;
+    }
+
+    /* Footer */
+    footer {
+      padding: 48px 0 32px;
+      text-align: center;
+    }
+    .footer-text {
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    /* Animated bg lines */
+    .bg-lines {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .bg-line {
+      position: absolute;
+      width: 1px;
+      background: linear-gradient(to bottom, transparent, rgba(232,197,71,0.06), transparent);
+      animation: line-move 8s linear infinite;
+    }
+    @keyframes line-move {
+      0% { transform: translateY(-100%); opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { transform: translateY(100vh); opacity: 0; }
+    }
+
+    /* Wrap relative */
+    .wrap { position: relative; z-index: 10; }
+
+    /* Responsive */
+    @media (max-width: 480px) {
+      .card { padding: 24px 20px; }
+      .options-row { gap: 8px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- Animated background lines -->
+<div class="bg-lines" id="bgLines"></div>
+
+<div class="wrap">
+  <header>
+    <div class="header-label">
+      <span>Movie Recap System</span>
+    </div>
+    <h1>BURMESE<span>DUB</span></h1>
+    <p class="subtitle">
+      XHS ဗီဒီယိုကို မြန်မာဘာသာပြန်ဆို အသံထည့်<br/>
+      Paste your XiaoHongShu video URL below
+    </p>
+  </header>
+
+  <div class="divider"></div>
+
+  <div class="card">
+    <form id="recapForm">
+      <div class="input-group">
+        <div class="input-label">
+          <span class="dot"></span>
+          XiaoHongShu Video URL
+        </div>
+        <div class="url-input-wrap">
+          <svg class="xhs-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M15 10l-4 4m0 0l-4-4m4 4V3M3 17v2a2 2 0 002 2h14a2 2 0 002-2v-2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <input
+            type="url"
+            id="videoUrl"
+            placeholder="https://www.xiaohongshu.com/explore/..."
+            autocomplete="off"
+            spellcheck="false"
+          />
+        </div>
+      </div>
+
+      <div class="options-row">
+        <button type="button" class="option-chip active" data-voice="Kore">Voice: Kore</button>
+        <button type="button" class="option-chip" data-voice="Charon">Voice: Charon</button>
+        <button type="button" class="option-chip" data-voice="Fenrir">Voice: Fenrir</button>
+        <button type="button" class="option-chip" data-lang="zh">Lang: 中文</button>
+        <button type="button" class="option-chip" data-lang="en">Lang: EN</button>
+      </div>
+
+      <button type="submit" class="btn-submit" id="submitBtn">
+        START DUBBING
+      </button>
+    </form>
+
+    <!-- Status Panel -->
+    <div class="status-panel" id="statusPanel">
+      <div class="status-header">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="var(--accent)">
+          <circle cx="6" cy="6" r="6"/>
+        </svg>
+        Processing Pipeline
+      </div>
+
+      <ul class="steps" id="stepsList">
+        <li class="step" data-step="download">
+          <div class="step-icon">01</div>
+          <div class="step-text">
+            <div class="step-title">Download Video</div>
+            <div class="step-desc">yt-dlp မှတဆင့် XHS ဗီဒီယိုဒေါင်းလုပ်</div>
+          </div>
+        </li>
+        <li class="step" data-step="audio">
+          <div class="step-icon">02</div>
+          <div class="step-text">
+            <div class="step-title">Extract Audio</div>
+            <div class="step-desc">FFmpeg — 16kHz mono WAV</div>
+          </div>
+        </li>
+        <li class="step" data-step="transcribe">
+          <div class="step-icon">03</div>
+          <div class="step-text">
+            <div class="step-title">Transcribe + Diarize</div>
+            <div class="step-desc">WhisperX word-level · pyannote speaker detection</div>
+          </div>
+        </li>
+        <li class="step" data-step="translate">
+          <div class="step-icon">04</div>
+          <div class="step-text">
+            <div class="step-title">Translate to Burmese</div>
+            <div class="step-desc">Gemini 2.0 Flash — Myanmar Unicode</div>
+          </div>
+        </li>
+        <li class="step" data-step="tts">
+          <div class="step-icon">05</div>
+          <div class="step-text">
+            <div class="step-title">Generate Voiceover</div>
+            <div class="step-desc">Gemini 2.5 Flash TTS — segment-by-segment</div>
+          </div>
+        </li>
+        <li class="step" data-step="assemble">
+          <div class="step-icon">06</div>
+          <div class="step-text">
+            <div class="step-title">Assemble Final Video</div>
+            <div class="step-desc">FFmpeg adelay sync · AAC 192kbps</div>
+          </div>
+        </li>
+      </ul>
+
+      <div class="log-box" id="logBox"></div>
+
+      <div class="result-box" id="resultBox">
+        <div class="result-title">✓ DUBBING COMPLETE</div>
+        <div class="result-path">Output: <span id="outputPath">—</span></div>
+      </div>
+
+      <div class="error-box" id="errorBox">
+        <div class="error-msg" id="errorMsg">—</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-text">Movie Recap · Burmese Dub System · n8n Powered</div>
+  </footer>
+</div>
+
+<script>
+  // ── Config ──────────────────────────────────────────────────────────────────
+  const WEBHOOK_URL = 'https://n8n.srv1235044.hstgr.cloud/webhook/movie-recap';
+
+  // ── Cursor ───────────────────────────────────────────────────────────────────
+  const cursor = document.getElementById('cursor');
+  const ring   = document.getElementById('cursorRing');
+  let cx = 0, cy = 0, rx = 0, ry = 0;
+
+  document.addEventListener('mousemove', e => {
+    cx = e.clientX; cy = e.clientY;
+    cursor.style.left = cx + 'px';
+    cursor.style.top  = cy + 'px';
+  });
+
+  function animRing() {
+    rx += (cx - rx) * 0.12;
+    ry += (cy - ry) * 0.12;
+    ring.style.left = rx + 'px';
+    ring.style.top  = ry + 'px';
+    requestAnimationFrame(animRing);
+  }
+  animRing();
+
+  document.querySelectorAll('input, button, a').forEach(el => {
+    el.addEventListener('mouseenter', () => { cursor.classList.add('hovering'); ring.classList.add('hovering'); });
+    el.addEventListener('mouseleave', () => { cursor.classList.remove('hovering'); ring.classList.remove('hovering'); });
+  });
+
+  // ── BG Lines ─────────────────────────────────────────────────────────────────
+  const bgLines = document.getElementById('bgLines');
+  for (let i = 0; i < 8; i++) {
+    const line = document.createElement('div');
+    line.className = 'bg-line';
+    line.style.left = (Math.random() * 100) + '%';
+    line.style.height = (100 + Math.random() * 200) + 'px';
+    line.style.animationDelay = (Math.random() * 8) + 's';
+    line.style.animationDuration = (6 + Math.random() * 6) + 's';
+    bgLines.appendChild(line);
+  }
+
+  // ── Voice/Lang chips ─────────────────────────────────────────────────────────
+  let selectedVoice = 'Kore';
+  let selectedLang  = null;
+
+  document.querySelectorAll('.option-chip[data-voice]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.option-chip[data-voice]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedVoice = btn.dataset.voice;
+    });
+  });
+
+  document.querySelectorAll('.option-chip[data-lang]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const wasActive = btn.classList.contains('active');
+      document.querySelectorAll('.option-chip[data-lang]').forEach(b => b.classList.remove('active'));
+      if (!wasActive) { btn.classList.add('active'); selectedLang = btn.dataset.lang; }
+      else selectedLang = null;
+    });
+  });
+
+  // ── Log helper ───────────────────────────────────────────────────────────────
+  const logBox = document.getElementById('logBox');
+  function log(msg, type = '') {
+    const line = document.createElement('div');
+    line.className = 'log-line' + (type ? ' ' + type : '');
+    line.textContent = msg;
+    logBox.appendChild(line);
+    logBox.scrollTop = logBox.scrollHeight;
+  }
+
+  // ── Steps ─────────────────────────────────────────────────────────────────────
+  const steps = document.querySelectorAll('.step');
+
+  function setStep(name, state) {
+    const el = document.querySelector(`.step[data-step="${name}"]`);
+    if (!el) return;
+    el.classList.remove('active', 'done', 'failed');
+    if (state) el.classList.add(state);
+    const icon = el.querySelector('.step-icon');
+    const icons = { active: '◌', done: '✓', failed: '✕' };
+    const nums  = { download:'01', audio:'02', transcribe:'03', translate:'04', tts:'05', assemble:'06' };
+    icon.textContent = state ? (icons[state] || nums[name]) : nums[name];
+  }
+
+  const STEP_ORDER = ['download','audio','transcribe','translate','tts','assemble'];
+
+  function simulateProgress(doneCallback) {
+    // Steps advance based on estimated timings — actual result from webhook response
+    const timings = [8000, 12000, 35000, 15000, 40000, 20000];
+    let i = 0;
+
+    function next() {
+      if (i > 0) setStep(STEP_ORDER[i-1], 'done');
+      if (i >= STEP_ORDER.length) { doneCallback(); return; }
+      setStep(STEP_ORDER[i], 'active');
+      const stepNames = [
+        'Downloading video from XHS...',
+        'Extracting audio via FFmpeg...',
+        'Running WhisperX + pyannote...',
+        'Translating with Gemini 2.0...',
+        'Generating TTS per segment...',
+        'Assembling final video...'
+      ];
+      log(stepNames[i], 'info');
+      setTimeout(() => { i++; next(); }, timings[i]);
+    }
+    next();
+  }
+
+  // ── Form submit ───────────────────────────────────────────────────────────────
+  const form       = document.getElementById('recapForm');
+  const urlInput   = document.getElementById('videoUrl');
+  const submitBtn  = document.getElementById('submitBtn');
+  const statusPanel = document.getElementById('statusPanel');
+  const resultBox  = document.getElementById('resultBox');
+  const errorBox   = document.getElementById('errorBox');
+  const outputPath = document.getElementById('outputPath');
+  const errorMsg   = document.getElementById('errorMsg');
+
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+
+    const url = urlInput.value.trim();
+    if (!url || !url.includes('xiaohongshu.com')) {
+      urlInput.classList.add('error');
+      urlInput.focus();
+      setTimeout(() => urlInput.classList.remove('error'), 1500);
+      log('Invalid URL — must be a xiaohongshu.com link', 'error');
+      statusPanel.classList.add('visible');
+      return;
+    }
+
+    // Reset UI
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'PROCESSING…';
+    statusPanel.classList.add('visible');
+    resultBox.classList.remove('visible');
+    errorBox.classList.remove('visible');
+    logBox.innerHTML = '';
+    STEP_ORDER.forEach(s => setStep(s, null));
+
+    log('Webhook: ' + WEBHOOK_URL, 'info');
+    log('URL: ' + url);
+    if (selectedVoice) log('Voice: ' + selectedVoice);
+
+    // Start visual progress simulation
+    let progressDone = false;
+    let responseDone = false;
+    let responseData = null;
+
+    simulateProgress(() => { progressDone = true; tryFinish(); });
+
+    // Fire webhook
+    try {
+      const payload = { url };
+      if (selectedVoice) payload.voice = selectedVoice;
+      if (selectedLang)  payload.lang  = selectedLang;
+
+      const resp = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const text = await resp.text();
+      let data = {};
+      try { data = JSON.parse(text); } catch(_) { data = { raw: text }; }
+
+      responseDone = true;
+      responseData = { ok: resp.ok, status: resp.status, data };
+      tryFinish();
+
+    } catch (err) {
+      responseDone = true;
+      responseData = { ok: false, error: err.message };
+      tryFinish();
+    }
+
+    function tryFinish() {
+      // Wait for both simulated progress and actual response
+      if (!progressDone || !responseDone) return;
+
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'START DUBBING';
+
+      if (!responseData.ok || responseData.error) {
+        STEP_ORDER.forEach((s,i) => {
+          const el = document.querySelector(`.step[data-step="${s}"]`);
+          if (el && el.classList.contains('active')) setStep(s, 'failed');
+        });
+        log('Pipeline error: ' + (responseData.error || responseData.status), 'error');
+        errorMsg.textContent = responseData.error || JSON.stringify(responseData.data, null, 2).substring(0, 300);
+        errorBox.classList.add('visible');
+        return;
+      }
+
+      // Success
+      STEP_ORDER.forEach(s => setStep(s, 'done'));
+      const d = responseData.data;
+      const path = d.output_path || d.work_dir || '/media/dub/output_dubbed.mp4';
+      log('Complete! Output: ' + path, 'success');
+      outputPath.textContent = path;
+      resultBox.classList.add('visible');
+    }
+  });
+
+  // ── Input validation live ─────────────────────────────────────────────────────
+  urlInput.addEventListener('paste', e => {
+    setTimeout(() => {
+      const val = urlInput.value.trim();
+      if (val && val.includes('xiaohongshu.com')) log('URL detected: ' + val.substring(0,60) + '…', 'info');
+    }, 50);
+  });
+</script>
+</body>
+</html>
