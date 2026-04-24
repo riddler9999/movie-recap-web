@@ -500,7 +500,7 @@
           <input
             type="url"
             id="videoUrl"
-            placeholder="https://www.xiaohongshu.com/explore/..."
+            placeholder="https://www.xiaohongshu.com/explore/... or http://xhslink.com/..."
             autocomplete="off"
             spellcheck="false"
           />
@@ -717,11 +717,11 @@
     e.preventDefault();
 
     const url = urlInput.value.trim();
-    if (!url || !url.includes('xiaohongshu.com')) {
+    if (!url || (!url.includes('xiaohongshu.com') && !url.includes('xhslink.com'))) {
       urlInput.classList.add('error');
       urlInput.focus();
       setTimeout(() => urlInput.classList.remove('error'), 1500);
-      log('Invalid URL — must be a xiaohongshu.com link', 'error');
+      log('Invalid URL — must be xiaohongshu.com or xhslink.com', 'error');
       statusPanel.classList.add('visible');
       return;
     }
